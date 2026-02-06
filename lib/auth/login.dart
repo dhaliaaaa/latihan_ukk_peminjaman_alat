@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../admin/dashboard_admin.dart'; 
+import '../main_navigation.dart'; // Ini adalah kunci solusinya
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,72 +12,47 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
   bool _isLoading = false;
-  bool _isPasswordVisible = false;
-  
-  String? _emailError;
-  String? _passwordError;
-  String? _generalError; 
+  bool _obscurePassword = true; 
+  String? _errorMessage;
 
-  Future<void> _handleLogin() async {
-    setState(() {
-      _emailError = null;
-      _passwordError = null;
-      _generalError = null;
-    });
+  Future<void> _signIn() async {
+    setState(() => _errorMessage = null);
 
-    if (_emailController.text.isEmpty) {
-      setState(() => _emailError = "Email tidak boleh kosong");
+    if (_emailController.text.trim().isEmpty) {
+      setState(() => _errorMessage = "Masukkan email");
       return;
     }
-    if (_passwordController.text.isEmpty) {
-      setState(() => _passwordError = "Password tidak boleh kosong");
+    if (_passwordController.text.trim().isEmpty) {
+      setState(() => _errorMessage = "Masukkan password");
       return;
     }
 
     setState(() => _isLoading = true);
-
+    
     try {
-      final AuthResponse res = await Supabase.instance.client.auth.signInWithPassword(
+      await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      if (res.user != null && mounted) {
-        try {
-          final userData = await Supabase.instance.client
-              .from('user') 
-              .select('role')
-              .eq('id_user', res.user!.id)
-              .maybeSingle();
-
-          if (userData == null) {
-            throw 'Profil user tidak ditemukan di tabel database.';
-          }
-
-          if (mounted) {
-            if (userData['role'] == 'admin') {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const dashboard_admin()),
-              );
-            } else {
-              setState(() => _generalError = "Akses ditolak: Anda bukan Admin");
-              await Supabase.instance.client.auth.signOut();
-            }
-          }
-        } catch (e) {
-          print("DETAIL ERROR DATABASE: $e");
-          setState(() => _generalError = "Gagal memverifikasi Role. Pastikan tabel 'user' tersedia.");
-          await Supabase.instance.client.auth.signOut();
-        }
+      if (mounted) {
+        // 2. Sekarang kita arahkan ke MainNavigation yang sudah kamu buat
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainNavigation()),
+        );
       }
-    } on AuthException catch (e) {
-      setState(() => _generalError = e.message);
-    } catch (e) {
-      print("DETAIL ERROR UMUM: $e");
-      setState(() => _generalError = "Koneksi gagal: Silahkan cek internet Anda.");
+    } on AuthException catch (error) {
+      setState(() {
+        if (error.message.contains("Invalid login credentials")) {
+          _errorMessage = "Email atau Password salah!";
+        } else {
+          _errorMessage = error.message;
+        }
+      });
+    } catch (error) {
+      setState(() => _errorMessage = "Terjadi kesalahan tak terduga");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -93,90 +68,154 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(25),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // --- TAMBAHAN ASSET GAMBAR DI SINI ---
-              // Pastikan path assets/logo.png sesuai dengan pubspec.yaml kamu
-              Image.asset(
-                'assets/image/LOGO.png', 
-                height: 120,
-                errorBuilder: (context, error, stackTrace) {
-                  // Jika gambar tidak ditemukan, tampilkan ikon default agar tidak error
-                  return const Icon(Icons.lock_person, size: 80, color: Color(0xFF0D2B52));
-                },
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          Container(
+            height: MediaQuery.of(context).size.height * 0.5,
+            decoration: const BoxDecoration(
+              color: Color(0xFF002347),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(50),
+                bottomRight: Radius.circular(50),
               ),
-              // -------------------------------------
-              
-              const SizedBox(height: 10),
-              const Text(
-                "LOGIN ADMIN",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0D2B52)),
-              ),
-              const SizedBox(height: 30),
-              
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: const Icon(Icons.email),
-                  errorText: _emailError,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 40),
+                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 25),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 20,
+                      offset: Offset(0, 10),
+                    )
+                  ],
                 ),
-              ),
-              const SizedBox(height: 15),
-              
-              TextField(
-                controller: _passwordController,
-                obscureText: !_isPasswordVisible,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: const Icon(Icons.lock),
-                  errorText: _passwordError,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                  suffixIcon: IconButton(
-                    icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                  ),
-                ),
-              ),
-              
-              if (_generalError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 15),
-                  child: Text(
-                    _generalError!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
-                  ),
-                ),
-                
-              const SizedBox(height: 30),
-              
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0D2B52),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    elevation: 5,
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'LOGIN',
-                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Image.asset(
+                      'assets/image/LOGO.png',
+                      height: 100,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.business, color: Color(0xFF002347), size: 80),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "PINJAMIN",
+                      style: TextStyle(
+                        color: Color(0xFF002347),
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const Text(
+                      "BRAKA",
+                      style: TextStyle(
+                        color: Color(0xFF002347),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    _buildTextField(
+                      controller: _emailController,
+                      hint: "Enter email",
+                      icon: Icons.email,
+                      hasError: _errorMessage != null && _errorMessage!.contains("email"),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildTextField(
+                      controller: _passwordController,
+                      hint: "Enter password",
+                      icon: _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      isPassword: _obscurePassword, 
+                      isPasswordField: true, 
+                      hasError: _errorMessage != null && (_errorMessage!.contains("password") || _errorMessage!.contains("salah")),
+                    ),
+                    if (_errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 15),
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red, fontSize: 13),
                         ),
+                      ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: 160,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _signIn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF002347),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          elevation: 5,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              )
+                            : const Text(
+                                "LOGIN",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+    bool isPasswordField = false,
+    bool hasError = false,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F8),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: hasError ? Colors.red.withOpacity(0.5) : Colors.grey.shade300),
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword,
+        decoration: InputDecoration(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+          border: InputBorder.none,
+          suffixIcon: GestureDetector(
+            onTap: isPasswordField ? () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            } : null,
+            child: Icon(icon, color: Colors.black, size: 20),
           ),
         ),
       ),

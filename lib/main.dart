@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:latihan1/auth/login.dart'; // Gunakan path lengkap agar LoginPage dikenali
+import 'auth/login.dart'; // Menggunakan path relatif agar pasti ketemu
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Ganti URL dan ANON_KEY dengan milikmu dari Dashboard Supabase
   await Supabase.initialize(
     url: 'https://aobjqngvgvkvjihhjoqn.supabase.co', 
     anonKey: 'sb_publishable_wIRenG1rs3PiJk-2HOGmnA_BT48CPW9',
@@ -22,8 +21,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Pinjamin Braka',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const LoginPage(), 
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF002347)),
+        useMaterial3: true,
+      ),
+      // Tanpa 'const' karena LoginPage biasanya punya controller dinamis
+      home: LoginPage(), 
     );
   }
 }
