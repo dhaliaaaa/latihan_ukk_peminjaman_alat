@@ -12,7 +12,8 @@ class MainNavigation extends StatefulWidget {
 }
 
 class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex = 2; // Set default ke Katalog (Index 2) untuk melihat hasilnya langsung
+  int _selectedIndex =
+      2; // Set default ke Katalog (Index 2) untuk melihat hasilnya langsung
 
   final List<Widget> _pages = [
     const DashboardAdmin(),
@@ -41,11 +42,15 @@ class _MainNavigationState extends State<MainNavigation> {
         selectedFontSize: 12,
         unselectedFontSize: 12,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Beranda'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_pin), label: 'Pengguna'),
-          BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: 'Katalog'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_filled), label: 'Beranda'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_pin), label: 'Pengguna'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.inventory_2), label: 'Katalog'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Riwayat'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings_outlined), label: 'Pengaturan'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined), label: 'Pengaturan'),
         ],
       ),
     );
@@ -63,15 +68,22 @@ class DashboardAdmin extends StatelessWidget {
       body: Column(
         children: [
           Container(
-            padding: const EdgeInsets.only(top: 60, left: 25, right: 25, bottom: 30),
+            padding:
+                const EdgeInsets.only(top: 60, left: 25, right: 25, bottom: 30),
             decoration: const BoxDecoration(
               color: Color(0xFF0D2B52),
-              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
+              borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30)),
             ),
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Halo, Admin!', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                Text('Halo, Admin!',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold)),
                 Icon(Icons.close, color: Colors.white, size: 30),
               ],
             ),
@@ -109,12 +121,16 @@ class DashboardAdmin extends StatelessWidget {
   Widget _buildStatCard(String value, String label) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF1E3A5F), borderRadius: BorderRadius.circular(15)),
+      decoration: BoxDecoration(
+          color: const Color(0xFF1E3A5F),
+          borderRadius: BorderRadius.circular(15)),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.inventory_2, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 10),
@@ -122,8 +138,13 @@ class DashboardAdmin extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-              Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+              Text(value,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold)),
+              Text(label,
+                  style: const TextStyle(color: Colors.white70, fontSize: 10)),
             ],
           ),
         ],
@@ -134,13 +155,21 @@ class DashboardAdmin extends StatelessWidget {
   Widget _buildChartSection() {
     return Container(
       padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)]),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Grafik Peminjaman", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text("Grafik Peminjaman",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 15),
-          Row(children: [_buildFilterBtn("Mingguan", true), _buildFilterBtn("Bulanan", false), _buildFilterBtn("Tahunan", false)]),
+          Row(children: [
+            _buildFilterBtn("Mingguan", true),
+            _buildFilterBtn("Bulanan", false),
+            _buildFilterBtn("Tahunan", false)
+          ]),
           const SizedBox(height: 30),
           SizedBox(height: 200, child: _simpleBarChart()),
         ],
@@ -152,8 +181,14 @@ class DashboardAdmin extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(color: active ? const Color(0xFF0D2B52) : Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF0D2B52))),
-      child: Text(t, style: TextStyle(color: active ? Colors.white : const Color(0xFF0D2B52), fontSize: 11)),
+      decoration: BoxDecoration(
+          color: active ? const Color(0xFF0D2B52) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF0D2B52))),
+      child: Text(t,
+          style: TextStyle(
+              color: active ? Colors.white : const Color(0xFF0D2B52),
+              fontSize: 11)),
     );
   }
 
@@ -161,24 +196,54 @@ class DashboardAdmin extends StatelessWidget {
     return BarChart(BarChartData(
       maxY: 100,
       titlesData: FlTitlesData(
-        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, m) {
-          const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-          return (v.toInt() >= 0 && v.toInt() < days.length) ? Text(days[v.toInt()], style: const TextStyle(fontSize: 9)) : const Text('');
-        })),
-        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 25)),
+        bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (v, m) {
+                  const days = [
+                    'Senin',
+                    'Selasa',
+                    'Rabu',
+                    'Kamis',
+                    'Jumat',
+                    'Sabtu',
+                    'Minggu'
+                  ];
+                  return (v.toInt() >= 0 && v.toInt() < days.length)
+                      ? Text(days[v.toInt()],
+                          style: const TextStyle(fontSize: 9))
+                      : const Text('');
+                })),
+        leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: true, reservedSize: 25)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles:
+            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
       gridData: const FlGridData(show: true, drawVerticalLine: false),
       borderData: FlBorderData(show: false),
       barGroups: [
-        BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 30, color: const Color(0xFF0D2B52), width: 15)]),
-        BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 50, color: const Color(0xFF0D2B52), width: 15)]),
-        BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 70, color: const Color(0xFF0D2B52), width: 15)]),
-        BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 60, color: const Color(0xFF0D2B52), width: 15)]),
-        BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 90, color: const Color(0xFF0D2B52), width: 15)]),
-        BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 80, color: const Color(0xFF0D2B52), width: 15)]),
-        BarChartGroupData(x: 6, barRods: [BarChartRodData(toY: 85, color: const Color(0xFF0D2B52), width: 15)]),
+        BarChartGroupData(x: 0, barRods: [
+          BarChartRodData(toY: 30, color: const Color(0xFF0D2B52), width: 15)
+        ]),
+        BarChartGroupData(x: 1, barRods: [
+          BarChartRodData(toY: 50, color: const Color(0xFF0D2B52), width: 15)
+        ]),
+        BarChartGroupData(x: 2, barRods: [
+          BarChartRodData(toY: 70, color: const Color(0xFF0D2B52), width: 15)
+        ]),
+        BarChartGroupData(x: 3, barRods: [
+          BarChartRodData(toY: 60, color: const Color(0xFF0D2B52), width: 15)
+        ]),
+        BarChartGroupData(x: 4, barRods: [
+          BarChartRodData(toY: 90, color: const Color(0xFF0D2B52), width: 15)
+        ]),
+        BarChartGroupData(x: 5, barRods: [
+          BarChartRodData(toY: 80, color: const Color(0xFF0D2B52), width: 15)
+        ]),
+        BarChartGroupData(x: 6, barRods: [
+          BarChartRodData(toY: 85, color: const Color(0xFF0D2B52), width: 15)
+        ]),
       ],
     ));
   }
@@ -202,7 +267,13 @@ class MyCustomScrollBehavior extends MaterialScrollBehavior {
 class _KategoriPageState extends State<KategoriPage> {
   final SupabaseClient supabase = Supabase.instance.client;
   String selectedKategori = 'Semua';
-  final List<String> daftarKategori = ['Semua', 'Laptop', 'FlashDisk', 'Proyektor', 'Camera'];
+  final List<String> daftarKategori = [
+    'Semua',
+    'Laptop',
+    'FlashDisk',
+    'Proyektor',
+    'Camera'
+  ];
 
   Stream<List<Map<String, dynamic>>> _getAlatStream() {
     return supabase.from('alat').stream(primaryKey: ['id']);
@@ -214,7 +285,8 @@ class _KategoriPageState extends State<KategoriPage> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
             child: Column(
@@ -242,17 +314,24 @@ class _KategoriPageState extends State<KategoriPage> {
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 30, vertical: 10),
                         decoration: BoxDecoration(
                           color: const Color(0xFFAAAAAA),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2))
                           ],
                         ),
                         child: const Text(
                           "Batal",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16),
                         ),
                       ),
                     ),
@@ -263,17 +342,24 @@ class _KategoriPageState extends State<KategoriPage> {
                         Navigator.pop(context);
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 30, vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF800000), 
+                          color: const Color(0xFF800000),
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))
+                            BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2))
                           ],
                         ),
                         child: const Text(
                           "Hapus",
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16),
                         ),
                       ),
                     ),
@@ -294,23 +380,32 @@ class _KategoriPageState extends State<KategoriPage> {
       body: Column(
         children: [
           Container(
-            padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 30),
+            padding:
+                const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 30),
             decoration: const BoxDecoration(
               color: Color(0xFF002347),
-              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
+              borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30)),
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
-                    Text("Katalog Alat", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                    Text("Katalog Alat",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold)),
                     Icon(Icons.close, color: Colors.white, size: 28),
                   ],
                 ),
                 const SizedBox(height: 25),
                 Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30)),
                   child: const TextField(
                     decoration: InputDecoration(
                       hintText: "Search",
@@ -336,31 +431,64 @@ class _KategoriPageState extends State<KategoriPage> {
                     stream: _getAlatStream(),
                     builder: (context, snapshot) {
                       List<Map<String, dynamic>> data = snapshot.data ?? [];
-                      if (data.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
+                      if (data.isEmpty &&
+                          snapshot.connectionState != ConnectionState.waiting) {
                         data = [
-                          {'nama_alat': 'Proyektor BenQ EX-1', 'kategori': 'Proyektor', 'stok': 8, 'gambar_url': 'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/proyektor.png'},
-                          {'nama_alat': 'Laptop Asus Vivobook 15.6', 'kategori': 'Laptop', 'stok': 10, 'gambar_url': 'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/laptop.png'},
-                          {'nama_alat': '256GB USB 2.0 FLASH DRIVE', 'kategori': 'FlashDisk', 'stok': 4, 'gambar_url': 'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/flashdisk.png'},
-                          {'nama_alat': 'Canon EOS 200D MARK', 'kategori': 'Camera', 'stok': 6, 'gambar_url': 'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/camera.png'},
+                          {
+                            'nama_alat': 'Proyektor BenQ EX-1',
+                            'kategori': 'Proyektor',
+                            'stok': 8,
+                            'gambar_url':
+                                'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/proyektor.png'
+                          },
+                          {
+                            'nama_alat': 'Laptop Asus Vivobook 15.6',
+                            'kategori': 'Laptop',
+                            'stok': 10,
+                            'gambar_url':
+                                'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/laptop.png'
+                          },
+                          {
+                            'nama_alat': '256GB USB 2.0 FLASH DRIVE',
+                            'kategori': 'FlashDisk',
+                            'stok': 4,
+                            'gambar_url':
+                                'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/flashdisk.png'
+                          },
+                          {
+                            'nama_alat': 'Canon EOS 200D MARK',
+                            'kategori': 'Camera',
+                            'stok': 6,
+                            'gambar_url':
+                                'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/camera.png'
+                          },
                         ];
                       }
-                      final filtered = selectedKategori == 'Semua' 
-                          ? data 
-                          : data.where((i) => i['kategori'] == selectedKategori).toList();
+                      final filtered = selectedKategori == 'Semua'
+                          ? data
+                          : data
+                              .where((i) => i['kategori'] == selectedKategori)
+                              .toList();
 
                       return GridView.builder(
                         shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(), 
+                        physics: const NeverScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(15),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2, childAspectRatio: 0.75, crossAxisSpacing: 15, mainAxisSpacing: 15),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.75,
+                                crossAxisSpacing: 15,
+                                mainAxisSpacing: 15),
                         itemCount: filtered.length,
-                        itemBuilder: (context, index) => _buildCardAlat(filtered[index]),
+                        itemBuilder: (context, index) =>
+                            _buildCardAlat(filtered[index]),
                       );
                     },
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(right: 20, bottom: 30, top: 10),
+                    padding:
+                        const EdgeInsets.only(right: 20, bottom: 30, top: 10),
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: Column(
@@ -387,7 +515,7 @@ class _KategoriPageState extends State<KategoriPage> {
       height: 70,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(), 
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         itemCount: daftarKategori.length,
         itemBuilder: (context, index) {
@@ -399,19 +527,17 @@ class _KategoriPageState extends State<KategoriPage> {
               onTap: () => setState(() => selectedKategori = kat),
               child: Container(
                 alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF002347) : Colors.white, 
-                  borderRadius: BorderRadius.circular(20), 
-                  border: Border.all(color: const Color(0xFF002347))
-                ),
-                child: Text(
-                  kat, 
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFF002347),
-                    fontWeight: FontWeight.bold
-                  )
-                ),
+                    color: isSelected ? const Color(0xFF002347) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF002347))),
+                child: Text(kat,
+                    style: TextStyle(
+                        color:
+                            isSelected ? Colors.white : const Color(0xFF002347),
+                        fontWeight: FontWeight.bold)),
               ),
             ),
           );
@@ -425,27 +551,43 @@ class _KategoriPageState extends State<KategoriPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
+        ],
       ),
       child: Column(
         children: [
-          const Align(alignment: Alignment.topRight, child: Padding(padding: EdgeInsets.all(8), child: Icon(Icons.add_circle, color: Color(0xFF002347), size: 28))),
+          const Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(Icons.add_circle,
+                      color: Color(0xFF002347), size: 28))),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Image.network(item['gambar_url'] ?? '', fit: BoxFit.contain, errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, color: Colors.grey, size: 40)),
+              child: Image.network(item['gambar_url'] ?? '',
+                  fit: BoxFit.contain,
+                  errorBuilder: (c, e, s) => const Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey,
+                      size: 40)),
             ),
           ),
           const SizedBox(height: 5),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(
-              item['nama_alat'] ?? '', 
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF002347), fontSize: 12)
-            ),
+            child: Text(item['nama_alat'] ?? '',
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF002347),
+                    fontSize: 12)),
           ),
           Padding(
             padding: const EdgeInsets.all(12),
@@ -455,13 +597,22 @@ class _KategoriPageState extends State<KategoriPage> {
                 // Tombol Hapus memicu Dialog
                 GestureDetector(
                   onTap: () => _showDeleteConfirmation(context),
-                  child: const Icon(Icons.delete_outline, size: 22, color: Color(0xFF002347)),
+                  child: const Icon(Icons.delete_outline,
+                      size: 22, color: Color(0xFF002347)),
                 ),
-                const Icon(Icons.edit_outlined, size: 22, color: Color(0xFF002347)),
+                const Icon(Icons.edit_outlined,
+                    size: 22, color: Color(0xFF002347)),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFF002347), borderRadius: BorderRadius.circular(10)),
-                  child: Text("Tersedia ${item['stok']}", style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                      color: const Color(0xFF002347),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Text("Tersedia ${item['stok']}",
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -474,10 +625,24 @@ class _KategoriPageState extends State<KategoriPage> {
   Widget _buildFabAction(String label, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFF0D2B52), borderRadius: BorderRadius.circular(8), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))]),
+      decoration: BoxDecoration(
+          color: const Color(0xFF0D2B52),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: const [
+            BoxShadow(
+                color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
+          ]),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [Icon(icon, color: Colors.white, size: 16), const SizedBox(width: 8), Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))],
+        children: [
+          Icon(icon, color: Colors.white, size: 16),
+          const SizedBox(width: 8),
+          Text(label,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold))
+        ],
       ),
     );
   }
