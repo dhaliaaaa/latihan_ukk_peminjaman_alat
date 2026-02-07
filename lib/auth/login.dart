@@ -37,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (mounted) {
-        // 2. Sekarang kita arahkan ke MainNavigation yang sudah kamu buat
+        // Berhasil login, arahkan ke MainNavigation
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MainNavigation()),
@@ -129,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                       controller: _emailController,
                       hint: "Enter email",
                       icon: Icons.email,
-                      hasError: _errorMessage != null && _errorMessage!.contains("email"),
+                      hasError: _errorMessage != null && _errorMessage!.toLowerCase().contains("email"),
                     ),
                     const SizedBox(height: 20),
                     _buildTextField(
@@ -138,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                       icon: _obscurePassword ? Icons.visibility_off : Icons.visibility,
                       isPassword: _obscurePassword, 
                       isPasswordField: true, 
-                      hasError: _errorMessage != null && (_errorMessage!.contains("password") || _errorMessage!.contains("salah")),
+                      hasError: _errorMessage != null && (_errorMessage!.toLowerCase().contains("password") || _errorMessage!.contains("salah")),
                     ),
                     if (_errorMessage != null)
                       Padding(
@@ -199,7 +199,8 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F8),
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: hasError ? Colors.red.withOpacity(0.5) : Colors.grey.shade300),
+        // PERBAIKAN: Menggunakan .withValues untuk menghindari warning deprecated
+        border: Border.all(color: hasError ? Colors.red.withValues(alpha: 0.5) : Colors.grey.shade300),
       ),
       child: TextField(
         controller: controller,

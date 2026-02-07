@@ -1,370 +1,89 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:ui';
+import 'edit_kategori.dart'; // Pastikan import ini ada
 
-// --- 1. WRAPPER UTAMA ---
-class MainNavigation extends StatefulWidget {
-  const MainNavigation({super.key});
-
-  @override
-  State<MainNavigation> createState() => _MainNavigationState();
-}
-
-class _MainNavigationState extends State<MainNavigation> {
-  int _selectedIndex =
-      2; // Set default ke Katalog (Index 2) untuk melihat hasilnya langsung
-
-  final List<Widget> _pages = [
-    const DashboardAdmin(),
-    const Center(child: Text("Halaman Pengguna")),
-    const KategoriPage(),
-    const Center(child: Text("Halaman Riwayat")),
-    const Center(child: Text("Halaman Pengaturan")),
-  ];
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF0D2B52),
-        unselectedItemColor: Colors.grey,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_filled), label: 'Beranda'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_pin), label: 'Pengguna'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.inventory_2), label: 'Katalog'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Riwayat'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.settings_outlined), label: 'Pengaturan'),
-        ],
-      ),
-    );
-  }
-}
-
-// --- 2. HALAMAN DASHBOARD ADMIN ---
-class DashboardAdmin extends StatelessWidget {
-  const DashboardAdmin({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F7F9),
-      body: Column(
-        children: [
-          Container(
-            padding:
-                const EdgeInsets.only(top: 60, left: 25, right: 25, bottom: 30),
-            decoration: const BoxDecoration(
-              color: Color(0xFF0D2B52),
-              borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30)),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Halo, Admin!',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold)),
-                Icon(Icons.close, color: Colors.white, size: 30),
-              ],
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
-                    childAspectRatio: 1.6,
-                    children: [
-                      _buildStatCard("30", "Total Aset"),
-                      _buildStatCard("17", "Tersedia"),
-                      _buildStatCard("6", "Sedang Dipinjam"),
-                      _buildStatCard("10", "Perlu Perbaikan"),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-                  _buildChartSection(),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String value, String label) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-          color: const Color(0xFF1E3A5F),
-          borderRadius: BorderRadius.circular(15)),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8)),
-            child: const Icon(Icons.inventory_2, color: Colors.white, size: 24),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(value,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold)),
-              Text(label,
-                  style: const TextStyle(color: Colors.white70, fontSize: 10)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChartSection() {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10)]),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("Grafik Peminjaman",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 15),
-          Row(children: [
-            _buildFilterBtn("Mingguan", true),
-            _buildFilterBtn("Bulanan", false),
-            _buildFilterBtn("Tahunan", false)
-          ]),
-          const SizedBox(height: 30),
-          SizedBox(height: 200, child: _simpleBarChart()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterBtn(String t, bool active) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-          color: active ? const Color(0xFF0D2B52) : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF0D2B52))),
-      child: Text(t,
-          style: TextStyle(
-              color: active ? Colors.white : const Color(0xFF0D2B52),
-              fontSize: 11)),
-    );
-  }
-
-  Widget _simpleBarChart() {
-    return BarChart(BarChartData(
-      maxY: 100,
-      titlesData: FlTitlesData(
-        bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (v, m) {
-                  const days = [
-                    'Senin',
-                    'Selasa',
-                    'Rabu',
-                    'Kamis',
-                    'Jumat',
-                    'Sabtu',
-                    'Minggu'
-                  ];
-                  return (v.toInt() >= 0 && v.toInt() < days.length)
-                      ? Text(days[v.toInt()],
-                          style: const TextStyle(fontSize: 9))
-                      : const Text('');
-                })),
-        leftTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: true, reservedSize: 25)),
-        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles:
-            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      ),
-      gridData: const FlGridData(show: true, drawVerticalLine: false),
-      borderData: FlBorderData(show: false),
-      barGroups: [
-        BarChartGroupData(x: 0, barRods: [
-          BarChartRodData(toY: 30, color: const Color(0xFF0D2B52), width: 15)
-        ]),
-        BarChartGroupData(x: 1, barRods: [
-          BarChartRodData(toY: 50, color: const Color(0xFF0D2B52), width: 15)
-        ]),
-        BarChartGroupData(x: 2, barRods: [
-          BarChartRodData(toY: 70, color: const Color(0xFF0D2B52), width: 15)
-        ]),
-        BarChartGroupData(x: 3, barRods: [
-          BarChartRodData(toY: 60, color: const Color(0xFF0D2B52), width: 15)
-        ]),
-        BarChartGroupData(x: 4, barRods: [
-          BarChartRodData(toY: 90, color: const Color(0xFF0D2B52), width: 15)
-        ]),
-        BarChartGroupData(x: 5, barRods: [
-          BarChartRodData(toY: 80, color: const Color(0xFF0D2B52), width: 15)
-        ]),
-        BarChartGroupData(x: 6, barRods: [
-          BarChartRodData(toY: 85, color: const Color(0xFF0D2B52), width: 15)
-        ]),
-      ],
-    ));
-  }
-}
-
-// --- 3. HALAMAN KATEGORI/KATALOG ---
 class KategoriPage extends StatefulWidget {
   const KategoriPage({super.key});
   @override
   _KategoriPageState createState() => _KategoriPageState();
 }
 
-class MyCustomScrollBehavior extends MaterialScrollBehavior {
-  @override
-  Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      };
-}
-
 class _KategoriPageState extends State<KategoriPage> {
   final SupabaseClient supabase = Supabase.instance.client;
-  String selectedKategori = 'Semua';
-  final List<String> daftarKategori = [
-    'Semua',
-    'Laptop',
-    'FlashDisk',
-    'Proyektor',
-    'Camera'
-  ];
 
-  Stream<List<Map<String, dynamic>>> _getAlatStream() {
-    return supabase.from('alat').stream(primaryKey: ['id']);
+  Stream<List<Map<String, dynamic>>> _getKategoriStream() {
+    return supabase.from('kategori').stream(primaryKey: ['id_kategori']);
   }
 
-  // FUNGSIONALITAS BARU: Dialog Konfirmasi Hapus (100% Mirip Gambar)
-  void _showDeleteConfirmation(BuildContext context) {
+  Future<void> _deleteKategori(int id) async {
+    try {
+      await supabase.from('kategori').delete().match({'id_kategori': id});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Kategori berhasil dihapus")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal menghapus: $e")),
+        );
+      }
+    }
+  }
+
+  void _showDeleteDialog(int id, String nama) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+            padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
                   "HAPUS",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF0D2B52),
-                  ),
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF002347)),
                 ),
                 const SizedBox(height: 15),
-                const Text(
-                  "Apakah anda yakin untuk menghapus produk?",
+                Text(
+                  "Apakah anda yakin untuk menghapus kategori $nama?",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                  style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 25),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // Tombol Batal
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFAAAAAA),
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2))
-                          ],
+                    SizedBox(
+                      width: 100,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[400],
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text(
-                          "Batal",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16),
-                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text("Batal", style: TextStyle(color: Colors.white)),
                       ),
                     ),
-                    // Tombol Hapus (Merah Marun)
-                    GestureDetector(
-                      onTap: () {
-                        // Logika penghapusan data bisa diletakkan di sini
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 30, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF800000),
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2))
-                          ],
+                    SizedBox(
+                      width: 100,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8B0000), 
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text(
-                          "Hapus",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16),
-                        ),
+                        onPressed: () {
+                          Navigator.pop(context); 
+                          _deleteKategori(id);    
+                        },
+                        child: const Text("Hapus", style: TextStyle(color: Colors.white)),
                       ),
                     ),
                   ],
-                ),
+                )
               ],
             ),
           ),
@@ -380,32 +99,28 @@ class _KategoriPageState extends State<KategoriPage> {
       body: Column(
         children: [
           Container(
-            padding:
-                const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 30),
+            padding: const EdgeInsets.only(top: 60, left: 20, right: 20, bottom: 30),
             decoration: const BoxDecoration(
               color: Color(0xFF002347),
               borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30)),
+                  bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text("Katalog Alat",
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold)),
-                    Icon(Icons.close, color: Colors.white, size: 28),
+                  children: [
+                    const Text("Katalog Alat",
+                        style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                      onPressed: () => Navigator.pop(context),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 20),
                 Container(
-                  decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30)),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
                   child: const TextField(
                     decoration: InputDecoration(
                       hintText: "Search",
@@ -418,85 +133,68 @@ class _KategoriPageState extends State<KategoriPage> {
               ],
             ),
           ),
-          ScrollConfiguration(
-            behavior: MyCustomScrollBehavior(),
-            child: _buildFilterList(),
-          ),
           Expanded(
             child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 50,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      children: [
+                        _buildFilterChip("Semua", true),
+                        _buildFilterChip("Laptop", false),
+                        _buildFilterChip("FlashDisk", false),
+                        _buildFilterChip("Proyektor", false),
+                        _buildFilterChip("Camera", false),
+                      ],
+                    ),
+                  ),
                   StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: _getAlatStream(),
+                    stream: _getKategoriStream(),
                     builder: (context, snapshot) {
-                      List<Map<String, dynamic>> data = snapshot.data ?? [];
-                      if (data.isEmpty &&
-                          snapshot.connectionState != ConnectionState.waiting) {
-                        data = [
-                          {
-                            'nama_alat': 'Proyektor BenQ EX-1',
-                            'kategori': 'Proyektor',
-                            'stok': 8,
-                            'gambar_url':
-                                'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/proyektor.png'
-                          },
-                          {
-                            'nama_alat': 'Laptop Asus Vivobook 15.6',
-                            'kategori': 'Laptop',
-                            'stok': 10,
-                            'gambar_url':
-                                'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/laptop.png'
-                          },
-                          {
-                            'nama_alat': '256GB USB 2.0 FLASH DRIVE',
-                            'kategori': 'FlashDisk',
-                            'stok': 4,
-                            'gambar_url':
-                                'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/flashdisk.png'
-                          },
-                          {
-                            'nama_alat': 'Canon EOS 200D MARK',
-                            'kategori': 'Camera',
-                            'stok': 6,
-                            'gambar_url':
-                                'https://vmfmclmubfoidvdyofjt.supabase.co/storage/v1/object/public/alat_images/camera.png'
-                          },
-                        ];
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.only(top: 50),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
                       }
-                      final filtered = selectedKategori == 'Semua'
-                          ? data
-                          : data
-                              .where((i) => i['kategori'] == selectedKategori)
-                              .toList();
-
+                      final data = snapshot.data ?? [];
+                      if (data.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.only(top: 50),
+                          child: Center(child: Text("Tidak ada data kategori")),
+                        );
+                      }
                       return GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(15),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 0.75,
-                                crossAxisSpacing: 15,
-                                mainAxisSpacing: 15),
-                        itemCount: filtered.length,
-                        itemBuilder: (context, index) =>
-                            _buildCardAlat(filtered[index]),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2, 
+                            childAspectRatio: 0.8, 
+                            crossAxisSpacing: 15, 
+                            mainAxisSpacing: 15),
+                        itemCount: data.length,
+                        itemBuilder: (context, index) {
+                          return _buildCardKategori(data[index]);
+                        },
                       );
                     },
                   ),
                   Padding(
-                    padding:
-                        const EdgeInsets.only(right: 20, bottom: 30, top: 10),
+                    padding: const EdgeInsets.only(right: 20, bottom: 40, top: 20),
                     child: Align(
                       alignment: Alignment.centerRight,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _buildFabAction("Tambah Alat", Icons.post_add),
+                          _buildFabAction("Tambah Alat", Icons.post_add_rounded),
                           const SizedBox(height: 10),
-                          _buildFabAction("Tambah Kategori", Icons.grid_view),
+                          _buildFabAction("Tambah Kategori", Icons.dashboard_rounded),
                         ],
                       ),
                     ),
@@ -510,138 +208,116 @@ class _KategoriPageState extends State<KategoriPage> {
     );
   }
 
-  Widget _buildFilterList() {
-    return SizedBox(
-      height: 70,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-        itemCount: daftarKategori.length,
-        itemBuilder: (context, index) {
-          String kat = daftarKategori[index];
-          bool isSelected = selectedKategori == kat;
-          return Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: InkWell(
-              onTap: () => setState(() => selectedKategori = kat),
-              child: Container(
-                alignment: Alignment.center,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF002347) : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFF002347))),
-                child: Text(kat,
-                    style: TextStyle(
-                        color:
-                            isSelected ? Colors.white : const Color(0xFF002347),
-                        fontWeight: FontWeight.bold)),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+  Widget _buildCardKategori(Map<String, dynamic> item) {
+    final int id = item['id_kategori'] ?? 0;
+    final String nama = item['nama_kategori'] ?? 'Tanpa Nama';
+    final String urlGambar = item['kode_alat'] ?? ''; 
 
-  Widget _buildCardAlat(Map<String, dynamic> item) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
+            color: Colors.black.withOpacity(0.05), 
+            blurRadius: 10, 
+            offset: const Offset(0, 4)
+          )
         ],
       ),
-      child: Column(
+      child: Stack(
         children: [
-          const Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                  padding: EdgeInsets.all(8),
-                  child: Icon(Icons.add_circle,
-                      color: Color(0xFF002347), size: 28))),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: Image.network(item['gambar_url'] ?? '',
-                  fit: BoxFit.contain,
-                  errorBuilder: (c, e, s) => const Icon(
-                      Icons.image_not_supported,
-                      color: Colors.grey,
-                      size: 40)),
-            ),
-          ),
-          const SizedBox(height: 5),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Text(item['nama_alat'] ?? '',
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF002347),
-                    fontSize: 12)),
+          const Positioned(
+            top: 10, right: 10,
+            child: Icon(Icons.add_circle, color: Color(0xFF002347), size: 26),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
               children: [
-                // Tombol Hapus memicu Dialog
-                GestureDetector(
-                  onTap: () => _showDeleteConfirmation(context),
-                  child: const Icon(Icons.delete_outline,
-                      size: 22, color: Color(0xFF002347)),
+                const SizedBox(height: 15),
+                Expanded(
+                  child: urlGambar.startsWith('http') 
+                    ? Image.network(
+                        urlGambar,
+                        fit: BoxFit.contain,
+                        errorBuilder: (c, e, s) => const Icon(Icons.image_not_supported, size: 40),
+                      )
+                    : const Icon(Icons.inventory_2_outlined, size: 50, color: Colors.grey),
                 ),
-                const Icon(Icons.edit_outlined,
-                    size: 22, color: Color(0xFF002347)),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: const Color(0xFF002347),
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Text("Tersedia ${item['stok']}",
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Text(
+                  nama.toUpperCase(),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF002347), fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => _showDeleteDialog(id, nama),
+                      child: const Icon(Icons.delete_outline, color: Color(0xFF002347), size: 22),
+                    ),
+                    const SizedBox(width: 5),
+                    
+                    // --- UPDATE DISINI: NAVIGASI EDIT ---
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => EditKategoriPage(item: item)),
+                        );
+                      },
+                      child: const Icon(Icons.edit_outlined, color: Color(0xFF002347), size: 22),
+                    ),
+                    
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(color: const Color(0xFF002347), borderRadius: BorderRadius.circular(10)),
+                      child: const Text("Tersedia", style: TextStyle(color: Colors.white, fontSize: 10)),
+                    )
+                  ],
                 ),
               ],
             ),
-          )
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, bool isActive) {
+    return Container(
+      margin: const EdgeInsets.only(right: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: isActive ? const Color(0xFF002347) : Colors.white,
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: const Color(0xFF002347)),
+      ),
+      child: Center(
+        child: Text(
+          label, 
+          style: TextStyle(
+            color: isActive ? Colors.white : const Color(0xFF002347),
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildFabAction(String label, IconData icon) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-          color: const Color(0xFF0D2B52),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: const [
-            BoxShadow(
-                color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
-          ]),
+      width: 160, 
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: const Color(0xFF002347), borderRadius: BorderRadius.circular(8)),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 16),
-          const SizedBox(width: 8),
-          Text(label,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold))
+          Icon(icon, color: Colors.white, size: 20), 
+          const SizedBox(width: 10), 
+          Text(label, style: const TextStyle(color: Colors.white, fontSize: 12))
         ],
       ),
     );
