@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main_navigation.dart'; // Ini adalah kunci solusinya
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _signIn() async {
     setState(() => _errorMessage = null);
 
+    // Validasi input sederhana
     if (_emailController.text.trim().isEmpty) {
       setState(() => _errorMessage = "Masukkan email");
       return;
@@ -31,18 +31,18 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
     
     try {
+      // 1. Proses Autentikasi Supabase
       await Supabase.instance.client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      if (mounted) {
-        // Berhasil login, arahkan ke MainNavigation
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainNavigation()),
-        );
-      }
+      // 2. KUNCI SUKSES ROLE: 
+      // Kita TIDAK menggunakan Navigator.push di sini.
+      // Begitu login berhasil, AuthGate di main.dart (StreamBuilder) akan 
+      // otomatis mendeteksi sesi baru, mengecek tabel 'user', 
+      // dan menampilkan dashboard yang sesuai secara otomatis.
+      
     } on AuthException catch (error) {
       setState(() {
         if (error.message.contains("Invalid login credentials")) {
@@ -71,6 +71,7 @@ class _LoginPageState extends State<LoginPage> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
+          // Background Biru Melengkung
           Container(
             height: MediaQuery.of(context).size.height * 0.5,
             decoration: const BoxDecoration(
@@ -125,6 +126,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 40),
+                    
+                    // Input Email
                     _buildTextField(
                       controller: _emailController,
                       hint: "Enter email",
@@ -132,6 +135,8 @@ class _LoginPageState extends State<LoginPage> {
                       hasError: _errorMessage != null && _errorMessage!.toLowerCase().contains("email"),
                     ),
                     const SizedBox(height: 20),
+                    
+                    // Input Password
                     _buildTextField(
                       controller: _passwordController,
                       hint: "Enter password",
@@ -140,6 +145,7 @@ class _LoginPageState extends State<LoginPage> {
                       isPasswordField: true, 
                       hasError: _errorMessage != null && (_errorMessage!.toLowerCase().contains("password") || _errorMessage!.contains("salah")),
                     ),
+
                     if (_errorMessage != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 15),
@@ -148,7 +154,10 @@ class _LoginPageState extends State<LoginPage> {
                           style: const TextStyle(color: Colors.red, fontSize: 13),
                         ),
                       ),
+                    
                     const SizedBox(height: 30),
+                    
+                    // Tombol Login
                     SizedBox(
                       width: 160,
                       height: 50,
@@ -199,8 +208,11 @@ class _LoginPageState extends State<LoginPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F8),
         borderRadius: BorderRadius.circular(15),
-        // PERBAIKAN: Menggunakan .withValues untuk menghindari warning deprecated
-        border: Border.all(color: hasError ? Colors.red.withValues(alpha: 0.5) : Colors.grey.shade300),
+        border: Border.all(
+          color: hasError 
+            ? Colors.red.withAlpha(128) // Pengganti withOpacity agar lebih modern
+            : Colors.grey.shade300
+        ),
       ),
       child: TextField(
         controller: controller,
