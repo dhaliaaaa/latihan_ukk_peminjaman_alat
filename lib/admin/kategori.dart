@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'edit_alat.dart'; // Pastikan file edit_alat.dart sudah ada di folder lib Anda
+import 'edit_alat.dart'; 
+import 'tambah_alat.dart'; // Import file tambah alat
 
 class KategoriPage extends StatefulWidget {
   const KategoriPage({super.key});
@@ -147,12 +148,16 @@ class _KategoriPageState extends State<KategoriPage> {
             ],
           ),
           
-          // --- TOMBOL TAMBAH ALAT SAJA ---
+          // --- TOMBOL TAMBAH ALAT (DIPERBAIKI) ---
           Positioned(
             bottom: 30,
             right: 20,
             child: _buildFabAction("Tambah Alat", Icons.post_add_rounded, () {
-               // Aksi untuk tambah alat
+              // Navigasi ke halaman tambah alat
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TambahAlatPage()),
+              );
             }),
           ),
         ],
@@ -186,7 +191,7 @@ class _KategoriPageState extends State<KategoriPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05), 
+            color: Colors.black.withOpacity(0.05), 
             blurRadius: 10, 
             offset: const Offset(0, 4)
           )
@@ -210,14 +215,12 @@ class _KategoriPageState extends State<KategoriPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Tombol Hapus
                 IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   icon: const Icon(Icons.delete_outline, color: Color(0xFF002347), size: 22),
                   onPressed: () => _showDeleteDialog(alat['id_alat'], alat['nama_alat'] ?? ""),
                 ),
-                // Tombol Edit - Navigasi ke EditAlatPage
                 IconButton(
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -244,29 +247,34 @@ class _KategoriPageState extends State<KategoriPage> {
     );
   }
 
+  // Widget tombol yang dioptimalkan untuk deteksi klik
   Widget _buildFabAction(String label, IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF002347),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2), 
-              blurRadius: 8, 
-              offset: const Offset(0, 4)
-            )
-          ]
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: Colors.white, size: 20),
-            const SizedBox(width: 12),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-          ],
+    return Material( // Menggunakan Material + Inkwell agar klik lebih responsif
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF002347),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2), 
+                blurRadius: 8, 
+                offset: const Offset(0, 4)
+              )
+            ]
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+            ],
+          ),
         ),
       ),
     );

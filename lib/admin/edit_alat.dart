@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditAlatPage extends StatefulWidget {
   final Map<String, dynamic> alat;
@@ -16,15 +17,19 @@ class _EditAlatPageState extends State<EditAlatPage> {
   late TextEditingController _namaController;
   late TextEditingController _stokController;
   late TextEditingController _deskripsiController;
-  bool _isLoading = false; // Untuk indikator loading saat simpan
+  
+  String? _imageUrl; 
+  bool _isLoading = false; 
 
   @override
   void initState() {
     super.initState();
-    // Mengambil data awal dengan fallback string kosong atau '0'
     _namaController = TextEditingController(text: widget.alat['nama_alat']?.toString() ?? "");
     _stokController = TextEditingController(text: widget.alat['stok']?.toString() ?? "0");
     _deskripsiController = TextEditingController(text: widget.alat['deskripsi']?.toString() ?? "");
+    
+    // MENGGUNAKAN KOLOM kode_aset sesuai struktur tabel Supabase kamu
+    _imageUrl = widget.alat['kode_aset']?.toString();
   }
 
   @override
@@ -35,11 +40,61 @@ class _EditAlatPageState extends State<EditAlatPage> {
     super.dispose();
   }
 
-  // --- FUNGSI UPDATE KE SUPABASE ---
+  // --- FUNGSI PILIH & UPLOAD GAMBAR ---
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50, // Kompresi gambar agar tidak terlalu berat
+    );
+
+    if (image == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final bytes = await image.readAsBytes(); 
+
+      // Pembersihan nama file (Mengganti spasi dengan underscore agar tidak error InvalidKey)
+      final String safeName = _namaController.text.replaceAll(' ', '_');
+      final fileName = "${DateTime.now().millisecondsSinceEpoch}_$safeName.jpg";
+      final path = 'uploads/$fileName';
+
+      // Upload ke bucket 'asset ukk'
+      await supabase.storage.from('asset ukk').uploadBinary(
+        path, 
+        bytes,
+        fileOptions: const FileOptions(contentType: 'image/jpeg', upsert: true),
+      );
+
+      // Ambil Public URL setelah berhasil upload
+      final String newUrl = supabase.storage.from('asset ukk').getPublicUrl(path);
+
+      setState(() {
+        _imageUrl = newUrl;
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Foto berhasil diunggah!"), backgroundColor: Colors.blue),
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal upload: $e"), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  // --- FUNGSI UPDATE DATA ---
   Future<void> _updateAlat() async {
-    if (_namaController.text.isEmpty) {
+    if (_namaController.text.isEmpty || _stokController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Nama alat tidak boleh kosong"), backgroundColor: Colors.orange),
+        const SnackBar(content: Text("Nama dan stok tidak boleh kosong"), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -47,20 +102,23 @@ class _EditAlatPageState extends State<EditAlatPage> {
     setState(() => _isLoading = true);
 
     try {
+      // UPDATE DATA KE TABEL 'alat'
+      // Pastikan 'kode_aset' di Supabase sudah bertipe 'text' agar tidak 'value too long'
       await supabase.from('alat').update({
         'nama_alat': _namaController.text,
         'stok': int.tryParse(_stokController.text) ?? 0,
         'deskripsi': _deskripsiController.text,
+        'kode_aset': _imageUrl, 
       }).eq('id_alat', widget.alat['id_alat']);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Data berhasil diperbarui!"), backgroundColor: Colors.green),
         );
-        Navigator.pop(context, true); // Mengirim 'true' agar halaman sebelumnya bisa refresh
+        // Mengirim 'true' kembali ke halaman utama agar halaman utama tahu harus refresh data
+        Navigator.pop(context, true); 
       }
     } catch (e) {
-      debugPrint("Error update: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Gagal memperbarui: $e"), backgroundColor: Colors.red),
@@ -78,81 +136,7 @@ class _EditAlatPageState extends State<EditAlatPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- HEADER NAVY SESUAI DESAIN ---
-            Stack(
-              children: [
-                Container(
-                  height: 280,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF0D2B52), // Navy sesuai desain sebelumnya
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(40),
-                      bottomRight: Radius.circular(40),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 50,
-                  left: 15,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                Center(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 80),
-                      Stack(
-                        alignment: Alignment.bottomRight,
-                        children: [
-                          Container(
-                            height: 160,
-                            width: 180,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(25),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
-                                )
-                              ],
-                            ),
-                            padding: const EdgeInsets.all(15),
-                            child: (widget.alat['kode_aset'] != null && widget.alat['kode_aset'].toString().isNotEmpty)
-                                ? Image.network(
-                                    widget.alat['kode_aset'], 
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                                  )
-                                : const Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                          ),
-                          // Tombol Edit Gambar
-                          Container(
-                            margin: const EdgeInsets.only(right: 5, bottom: 5),
-                            decoration: const BoxDecoration(
-                              color: Colors.white, 
-                              shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]
-                            ),
-                            child: IconButton(
-                              icon: const Icon(Icons.edit, color: Color(0xFF0D2B52), size: 18),
-                              onPressed: () {
-                                // Tambahkan logika pilih gambar jika diperlukan
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            // --- FORM INPUT ---
+            _buildHeader(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 35.0, vertical: 30),
               child: Column(
@@ -163,44 +147,111 @@ class _EditAlatPageState extends State<EditAlatPage> {
                   const SizedBox(height: 25),
                   _buildStyledTextField("Deskripsi", _deskripsiController, maxLines: 4),
                   const SizedBox(height: 50),
-
-                  // --- TOMBOL BATAL & SIMPAN ---
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.grey),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text("Batal", style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0D2B52),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            elevation: 5,
-                          ),
-                          onPressed: _isLoading ? null : _updateAlat,
-                          child: _isLoading 
-                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : const Text("Simpan", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildActionButtons(),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Stack(
+      children: [
+        Container(
+          height: 280,
+          decoration: const BoxDecoration(
+            color: Color(0xFF0D2B52),
+            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(40), bottomRight: Radius.circular(40)),
+          ),
+        ),
+        Positioned(
+          top: 50,
+          left: 15,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        Center(
+          child: Column(
+            children: [
+              const SizedBox(height: 80),
+              Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  Container(
+                    height: 160,
+                    width: 180,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))],
+                    ),
+                    padding: const EdgeInsets.all(15),
+                    child: _imageUrl != null && _imageUrl!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(15),
+                            child: Image.network(
+                              _imageUrl!, 
+                              fit: BoxFit.contain,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(child: CircularProgressIndicator());
+                              },
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                            ),
+                          )
+                        : const Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(right: 5, bottom: 5),
+                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]),
+                    child: IconButton(
+                      icon: const Icon(Icons.camera_alt, color: Color(0xFF0D2B52), size: 18),
+                      onPressed: _isLoading ? null : _pickAndUploadImage,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.grey),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 15),
+            ),
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal", style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D2B52),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(vertical: 15),
+            ),
+            onPressed: _isLoading ? null : _updateAlat,
+            child: _isLoading 
+              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+              : const Text("Simpan", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ],
     );
   }
 
@@ -215,14 +266,8 @@ class _EditAlatPageState extends State<EditAlatPage> {
             maxLines: maxLines,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF0D2B52), width: 1.5),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFF0D2B52), width: 2),
-              ),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF0D2B52), width: 1.5)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF0D2B52), width: 2)),
             ),
           ),
         ),
@@ -232,10 +277,7 @@ class _EditAlatPageState extends State<EditAlatPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 5),
             color: Colors.white,
-            child: Text(
-              label,
-              style: const TextStyle(color: Color(0xFF0D2B52), fontWeight: FontWeight.bold, fontSize: 13),
-            ),
+            child: Text(label, style: const TextStyle(color: Color(0xFF0D2B52), fontWeight: FontWeight.bold, fontSize: 13)),
           ),
         ),
       ],

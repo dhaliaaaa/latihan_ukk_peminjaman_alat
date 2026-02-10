@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-// IMPORT KATEGORI ANDA DISINI
+// IMPORT KATEGORI ANDA DISINI (Pastikan file kategori.dart ada)
 import 'kategori.dart'; 
 
 class DashboardAdmin extends StatefulWidget {
@@ -19,7 +19,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
     await Supabase.instance.client.auth.signOut();
   }
 
-  // --- KONTEN BERANDA (KODE AWAL ANDA) ---
+  // --- KONTEN BERANDA (DENGAN TAMBAHAN GRAFIK BARU) ---
   Widget _buildBerandaContent() {
     return Column(
       children: [
@@ -79,6 +79,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
             child: Column(
               children: [
+                // STAT CARD SECTION
                 GridView.count(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -94,7 +95,16 @@ class _DashboardAdminState extends State<DashboardAdmin> {
                   ],
                 ),
                 const SizedBox(height: 25),
+                
+                // GRAFIK LAMA (BAR CHART)
                 _buildChartSection(),
+                
+                const SizedBox(height: 25),
+
+                // GRAFIK BARU: ALAT PALING SERING DIPINJAM (PIE CHART)
+                _buildMostBorrowedSection(),
+                
+                const SizedBox(height: 20),
               ],
             ),
           ),
@@ -105,24 +115,23 @@ class _DashboardAdminState extends State<DashboardAdmin> {
 
   @override
   Widget build(BuildContext context) {
-    // --- LIST HALAMAN (KATEGORI DIMASUKKAN KE INDEX 2) ---
+    // --- LIST HALAMAN ---
     final List<Widget> _pages = [
       _buildBerandaContent(),                             // Index 0
       const Center(child: Text("Halaman Pengguna")),      // Index 1
-      const KategoriPage(),                               // Index 2 (KODE KATEGORI ANDA)
+      const KategoriPage(),                               // Index 2
       const Center(child: Text("Halaman Riwayat")),       // Index 3
       const Center(child: Text("Halaman Pengaturan")),    // Index 4
     ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7F9),
-      // MENGGUNAKAN INDEXEDSTACK AGAR STATE TERJAGA
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
       ),
 
-      // NAVIGASI BAWAH (KODE AWAL ANDA)
+      // NAVIGASI BAWAH
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) {
@@ -144,7 +153,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
     );
   }
 
-  // --- WIDGET HELPER TETAP SAMA SEPERTI KODE AWAL ANDA ---
+  // --- WIDGET HELPER STAT CARD ---
   Widget _buildStatCard(String value, String label) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -181,6 +190,7 @@ class _DashboardAdminState extends State<DashboardAdmin> {
     );
   }
 
+  // --- WIDGET HELPER GRAFIK BATANG (KODE LAMA) ---
   Widget _buildChartSection() {
     return Container(
       padding: const EdgeInsets.all(15),
@@ -206,6 +216,72 @@ class _DashboardAdminState extends State<DashboardAdmin> {
           ),
           const SizedBox(height: 30),
           SizedBox(height: 200, child: _simpleBarChart()),
+        ],
+      ),
+    );
+  }
+
+  // --- WIDGET BARU: PIE CHART (ALAT TERING DIPINJAM) ---
+  Widget _buildMostBorrowedSection() {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Alat Paling Sering Dipinjam", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 25),
+          Row(
+            children: [
+              // Grafik Lingkaran
+              SizedBox(
+                height: 140,
+                width: 140,
+                child: PieChart(
+                  PieChartData(
+                    sectionsSpace: 2,
+                    centerSpaceRadius: 30,
+                    sections: [
+                      PieChartSectionData(color: const Color(0xFF0D2B52), value: 40, title: '40%', radius: 40, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      PieChartSectionData(color: Colors.orange, value: 30, title: '30%', radius: 40, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      PieChartSectionData(color: Colors.blue, value: 20, title: '20%', radius: 40, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      PieChartSectionData(color: Colors.grey, value: 10, title: '10%', radius: 40, titleStyle: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 20),
+              // Legend (Keterangan Alat)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLegend(const Color(0xFF0D2B52), "Laptop ASUS"),
+                    _buildLegend(Colors.orange, "Proyektor"),
+                    _buildLegend(Colors.blue, "Kamera Canon"),
+                    _buildLegend(Colors.grey, "Lainnya"),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegend(Color color, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 8),
+          Text(text, style: const TextStyle(fontSize: 12, color: Colors.black87)),
         ],
       ),
     );
