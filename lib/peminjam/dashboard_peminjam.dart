@@ -1,260 +1,105 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class DashboardPeminjam extends StatefulWidget {
+class DashboardPeminjam extends StatelessWidget {
   const DashboardPeminjam({super.key});
 
   @override
-  State<DashboardPeminjam> createState() => _DashboardPeminjamState();
-}
+  Widget build(BuildContext context) {
+    // HAPUS Scaffold di sini agar tidak double navigasi
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // HEADER BIRU NAVY
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.only(top: 60, left: 25, right: 25, bottom: 40),
+          decoration: const BoxDecoration(color: Color(0xFF002347)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("Halo, Peminjam!", 
+                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 25),
+              // ROW STATUS BADGES
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _statusBadge("1 Aktif", const Color(0xFF6236FF)),
+                  _statusBadge("12 Selesai", const Color(0xFF00B14F)),
+                  _statusBadge("1 Terlambat", const Color(0xFFFF3B30), isWarning: true),
+                ],
+              ),
+            ],
+          ),
+        ),
+        
+        // KONTEN SEDANG DIPINJAM
+        const Padding(
+          padding: EdgeInsets.fromLTRB(25, 30, 25, 15),
+          child: Text("Sedang Dipinjam", 
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
+        ),
 
-class _DashboardPeminjamState extends State<DashboardPeminjam> {
-  final supabase = Supabase.instance.client;
-  int _selectedIndex = 0;
-
-  // FUNGSI LOGOUT
-  Future<void> _handleLogout() async {
-    await supabase.auth.signOut();
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            children: [
+              _buildBorrowItem("Apple Macbook Air 2022", "INV-01-2026", "Kembali dalam: 5 hari", Colors.green),
+              _buildBorrowItem("SanDisk 512GB Ultra Dual", "INV-01-2026", "Terlambat: 2 hari", Colors.red, isLate: true),
+              _buildBorrowItem("Proyektor Portable", "INV-01-2026", "Kembali dalam: 8 hari", Colors.green),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final user = supabase.auth.currentUser;
+  Widget _statusBadge(String label, Color color, {bool isWarning = false}) {
+    return Container(
+      width: 105, height: 75,
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
+      child: Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isWarning) const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 16),
+            if (isWarning) const SizedBox(width: 4),
+            Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+          ],
+        ),
+      ),
+    );
+  }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
+  Widget _buildBorrowItem(String title, String id, String info, Color infoColor, {bool isLate = false}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(color: const Color(0xFFF8F9FE), borderRadius: BorderRadius.circular(15)),
+      child: Row(
         children: [
-          // HEADER SECTION
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.only(top: 60, left: 30, right: 30, bottom: 30),
-            decoration: const BoxDecoration(
-              color: Color(0xFF002347), 
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            width: 80, height: 60,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
+            child: Icon(Icons.inventory_2, color: Colors.grey.shade400),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text("ID: $id", style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                const SizedBox(height: 8),
+                Row(
                   children: [
-                    const Text(
-                      "Hallo Peminjam",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      user?.email ?? "user@gmail.com",
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      "Online",
-                      style: TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.bold),
-                    ),
+                    if (isLate) Icon(Icons.warning, color: infoColor, size: 14),
+                    if (isLate) const SizedBox(width: 4),
+                    Text(info, style: TextStyle(color: infoColor, fontSize: 13, fontWeight: FontWeight.w500)),
                   ],
-                ),
-                
-                // --- PROFIL DENGAN MENU LOGOUT (KONSISTEN DENGAN ROLE LAIN) ---
-                PopupMenuButton<String>(
-                  onSelected: (value) {
-                    if (value == 'logout') {
-                      _handleLogout();
-                    }
-                  },
-                  offset: const Offset(0, 70),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(Icons.logout, color: Colors.red, size: 20),
-                          SizedBox(width: 10),
-                          Text('Logout'),
-                        ],
-                      ),
-                    ),
-                  ],
-                  child: const CircleAvatar(
-                    radius: 35,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, size: 50, color: Color(0xFF002347)),
-                  ),
                 ),
               ],
             ),
-          ),
-
-          // STATS GRID SECTION
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(25),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 20,
-                    mainAxisSpacing: 20,
-                    childAspectRatio: 1.2,
-                    children: [
-                      _buildStatCard("Pengguna Aktif", "7"),
-                      _buildStatCard("Alat Tersedia", "18"),
-                      _buildStatCard("Jumlah Alat", "12"),
-                      _buildStatCard("Alat Dipinjam", "5"),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-
-                  // RIWAYAT PEMINJAMAN SECTION
-                  const Text(
-                    "Riwayat Peminjaman",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF002347),
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-
-                  // LIST DARI SUPABASE
-                  StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: supabase
-                        .from('riwayat_peminjaman') 
-                        .stream(primaryKey: ['id'])
-                        .order('tanggal', ascending: false),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      
-                      // Data Dummy jika database kosong/error
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return Column(
-                          children: [
-                            _buildHistoryItem("Ananda Laras", "20 Januari 2026"),
-                            const SizedBox(height: 15),
-                            _buildHistoryItem("Antasena Bayu", "7 Januari 2026"),
-                          ],
-                        );
-                      }
-
-                      final data = snapshot.data!;
-                      return Column(
-                        children: data.map((item) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 15),
-                            child: _buildHistoryItem(
-                              item['nama_peminjam'] ?? "User",
-                              item['tanggal'] ?? "Tanggal",
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNav(),
-    );
-  }
-
-  // WIDGET NAVIGASI BAWAH
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF002347),
-        unselectedItemColor: Colors.grey,
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: "Katalog"),
-          BottomNavigationBarItem(icon: Icon(Icons.request_quote), label: "Pinjam"),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment), label: "Pengajuan"),
-          BottomNavigationBarItem(icon: Icon(Icons.analytics), label: "Laporan"),
-        ],
-      ),
-    );
-  }
-
-  // WIDGET UNTUK KOTAK STATISTIK
-  Widget _buildStatCard(String title, String value) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF153E6B), 
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2), 
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // WIDGET UNTUK ITEM RIWAYAT
-  Widget _buildHistoryItem(String name, String date) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D2E5C), 
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            backgroundColor: Colors.white,
-            child: Icon(Icons.person, color: Color(0xFF0D2E5C)),
-          ),
-          const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                date,
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
-              ),
-            ],
           ),
         ],
       ),

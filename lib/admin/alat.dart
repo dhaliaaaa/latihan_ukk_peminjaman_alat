@@ -15,10 +15,11 @@ class AlatPage extends StatefulWidget {
 
 class _AlatPageState extends State<AlatPage> {
   final SupabaseClient supabase = Supabase.instance.client;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   // --- FUNGSI HAPUS ALAT ---
   Future<void> _deleteAlat(int id, String nama) async {
-    // Menampilkan dialog konfirmasi
     bool confirm = await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -39,7 +40,6 @@ class _AlatPageState extends State<AlatPage> {
 
     if (confirm) {
       try {
-        // Proses hapus di Supabase
         await supabase.from('alat').delete().eq('id_alat', id);
         
         if (mounted) {
@@ -57,19 +57,20 @@ class _AlatPageState extends State<AlatPage> {
     }
   }
 
-  // --- FUNGSI EDIT ALAT (Placeholder) ---
+  // --- FUNGSI EDIT ALAT ---
   void _editAlat(Map<String, dynamic> item) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Fitur Edit untuk ${item['nama_alat']} sedang disiapkan")),
     );
-    // Di sini kamu bisa mengarahkan ke Navigator.push untuk EditAlatPage
   }
 
+  // --- STREAM DATA ALAT ---
   Stream<List<Map<String, dynamic>>> _getAlatStream() {
     return supabase
         .from('alat')
         .stream(primaryKey: ['id_alat'])
-        .eq('id_kategori', widget.idKategori);
+        .eq('id_kategori', widget.idKategori)
+        .order('nama_alat', ascending: true);
   }
 
   void _openTambahKategori() {
@@ -85,6 +86,12 @@ class _AlatPageState extends State<AlatPage> {
       context,
       MaterialPageRoute(builder: (context) => const TambahAlatPage()),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -107,10 +114,17 @@ class _AlatPageState extends State<AlatPage> {
                       return Center(child: Text("Error: ${snapshot.error}"));
                     }
                     
-                    final data = snapshot.data ?? [];
+                    var data = snapshot.data ?? [];
+
+                    // Logika Filter Pencarian Sederhana
+                    if (_searchQuery.isNotEmpty) {
+                      data = data.where((item) => 
+                        item['nama_alat'].toString().toLowerCase().contains(_searchQuery.toLowerCase())
+                      ).toList();
+                    }
 
                     if (data.isEmpty) {
-                      return const Center(child: Text("Belum ada alat di kategori ini"));
+                      return const Center(child: Text("Tidak ada alat ditemukan"));
                     }
 
                     return CustomScrollView(
@@ -122,7 +136,7 @@ class _AlatPageState extends State<AlatPage> {
                           sliver: SliverGrid(
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio: 0.70, // Sedikit disesuaikan agar muat dengan IconButton
+                              childAspectRatio: 0.75, 
                               crossAxisSpacing: 20,
                               mainAxisSpacing: 20,
                             ),
@@ -233,8 +247,14 @@ class _AlatPageState extends State<AlatPage> {
               color: Colors.white, 
               borderRadius: BorderRadius.circular(30)
             ),
-            child: const TextField(
-              decoration: InputDecoration(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              decoration: const InputDecoration(
                 hintText: "Search",
                 prefixIcon: Icon(Icons.search),
                 border: InputBorder.none,
@@ -248,6 +268,9 @@ class _AlatPageState extends State<AlatPage> {
   }
 
   Widget _buildCardAlat(Map<String, dynamic> item) {
+    // AMBIL STOK DARI DATABASE
+    final int stok = item['stok'] ?? 0;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -265,7 +288,12 @@ class _AlatPageState extends State<AlatPage> {
           const SizedBox(height: 10),
           Expanded(
             child: item['foto_alat'] != null 
-                ? Image.network(item['foto_alat'], fit: BoxFit.contain)
+                ? Image.network(
+                    item['foto_alat'], 
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => 
+                      const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                  )
                 : const Icon(Icons.laptop, size: 50, color: Colors.grey),
           ),
           const SizedBox(height: 5),
@@ -273,6 +301,8 @@ class _AlatPageState extends State<AlatPage> {
             item['nama_alat'] ?? 'Unit', 
             style: const TextStyle(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 5),
           Padding(
@@ -290,22 +320,27 @@ class _AlatPageState extends State<AlatPage> {
                   onTap: () => _editAlat(item),
                   child: const Icon(Icons.edit_outlined, size: 22, color: Colors.blueAccent),
                 ),
-                // Badge Stok
+                // BADGE TERSEDIA (Dinamis)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0D2B52), 
+                    // Warna merah jika stok kosong, biru jika ada
+                    color: stok > 0 ? const Color(0xFF0D2B52) : Colors.red.shade900, 
                     borderRadius: BorderRadius.circular(8)
                   ),
                   child: Text(
-                    "Stok: ${item['stok'] ?? 0}", 
-                    style: const TextStyle(color: Colors.white, fontSize: 9)
+                    "Tersedia: $stok", 
+                    style: const TextStyle(
+                      color: Colors.white, 
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold
+                    )
                   ),
                 )
               ],
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 8),
         ],
       ),
     );

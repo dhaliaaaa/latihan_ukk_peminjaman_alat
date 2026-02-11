@@ -14,6 +14,7 @@ class _RiwayatAdminPageState extends State<RiwayatAdminPage> {
   bool _isLoading = false;
   List<Map<String, dynamic>> _riwayatData = [];
   List<Map<String, dynamic>> _filteredData = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -24,34 +25,46 @@ class _RiwayatAdminPageState extends State<RiwayatAdminPage> {
   Future<void> _fetchRiwayat() async {
     setState(() => _isLoading = true);
     try {
-      // Query ke tabel peminjaman dan join ke tabel alat
       final data = await supabase
           .from('peminjaman')
           .select('*, alat(nama_alat, kode_aset)')
-          .order('id_peminjaman', ascending: false); // Menggunakan nama kolom baru
+          .order('tgl_pinjam', ascending: false);
 
       setState(() {
         _riwayatData = List<Map<String, dynamic>>.from(data);
-        _applyFilter(_selectedFilter);
+        _applyFilterAndSearch(); // Gunakan fungsi gabungan filter & search
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error Fetch: $e");
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _applyFilter(String filter) {
+  void _applyFilterAndSearch() {
+    String query = _searchController.text.toLowerCase();
+    
     setState(() {
-      _selectedFilter = filter;
-      if (filter == 'Semua') {
-        _filteredData = _riwayatData;
-      } else {
-        _filteredData = _riwayatData
-            .where((item) => item['status'].toString().toLowerCase() == filter.toLowerCase())
-            .toList();
-      }
+      _filteredData = _riwayatData.where((item) {
+        final statusMatch = _selectedFilter == 'Semua' || 
+            (item['status']?.toString().toLowerCase() == _selectedFilter.toLowerCase());
+        
+        final alatName = item['alat']?['nama_alat']?.toString().toLowerCase() ?? '';
+        final userName = item['id_user']?.toString().toLowerCase() ?? '';
+        final searchMatch = alatName.contains(query) || userName.contains(query);
+
+        return statusMatch && searchMatch;
+      }).toList();
     });
+  }
+
+  Future<void> _deleteRiwayat(dynamic id) async {
+    try {
+      await supabase.from('peminjaman').delete().eq('id_peminjaman', id);
+      _fetchRiwayat();
+    } catch (e) {
+      debugPrint("Error Delete: $e");
+    }
   }
 
   @override
@@ -77,40 +90,28 @@ class _RiwayatAdminPageState extends State<RiwayatAdminPage> {
       padding: const EdgeInsets.only(top: 60, bottom: 25, left: 25, right: 25),
       decoration: const BoxDecoration(
         color: Color(0xFF0D2B52),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () {}, // Tambahkan navigasi balik jika perlu
-              ),
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    "Riwayat",
-                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 48),
-            ],
+          const Text(
+            "Riwayat Peminjaman",
+            style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
           Container(
-            height: 50,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
-            child: const TextField(
-              decoration: InputDecoration(
-                hintText: "Cari ...",
-                prefixIcon: Icon(Icons.search),
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (_) => _applyFilterAndSearch(),
+              decoration: const InputDecoration(
+                hintText: "Cari alat atau ID peminjam...",
+                prefixIcon: Icon(Icons.search, color: Colors.grey),
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 13),
               ),
             ),
           ),
@@ -120,7 +121,8 @@ class _RiwayatAdminPageState extends State<RiwayatAdminPage> {
   }
 
   Widget _buildFilterSection() {
-    List<String> filters = ['Semua', 'Dipinjam', 'Dikembalikan', 'Terlambat'];
+    // Status disesuaikan dengan isi database Anda
+    List<String> filters = ['Semua', 'Dipinjam', 'menunggu', 'Kembali']; 
     return Container(
       height: 60,
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -135,7 +137,10 @@ class _RiwayatAdminPageState extends State<RiwayatAdminPage> {
             child: ChoiceChip(
               label: Text(filters[index]),
               selected: isSelected,
-              onSelected: (val) => _applyFilter(filters[index]),
+              onSelected: (val) {
+                setState(() => _selectedFilter = filters[index]);
+                _applyFilterAndSearch();
+              },
               selectedColor: const Color(0xFF0D2B52),
               labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
             ),
@@ -146,66 +151,108 @@ class _RiwayatAdminPageState extends State<RiwayatAdminPage> {
   }
 
   Widget _buildListRiwayat() {
-    if (_filteredData.isEmpty) return const Center(child: Text("Data Kosong"));
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      itemCount: _filteredData.length,
-      itemBuilder: (context, index) {
-        final item = _filteredData[index];
-        final alat = item['alat'];
+    if (_filteredData.isEmpty) {
+      return const Center(child: Text("Tidak ada data yang ditemukan"));
+    }
+    
+    return RefreshIndicator(
+      onRefresh: _fetchRiwayat,
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 25),
+        itemCount: _filteredData.length,
+        itemBuilder: (context, index) {
+          final item = _filteredData[index];
+          final alat = item['alat'];
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 20),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-          ),
-          child: Column(
-            children: [
-              Row(
+          return Card(
+            margin: const EdgeInsets.only(bottom: 15),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("Peminjam:", style: TextStyle(fontSize: 10, color: Colors.grey)),
-                        Text(item['id_user']?.toString() ?? "User", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text(alat != null ? alat['nama_alat'] : "Alat", style: const TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 5),
-                        Text("${item['tgl_pinjam']} - ${item['tgl_kembali']}", style: const TextStyle(fontSize: 11)),
-                      ],
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      width: 60, height: 60,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: alat != null && alat['kode_aset'] != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                alat['kode_aset'],
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(Icons.inventory_2),
+                              ),
+                            )
+                          : const Icon(Icons.inventory_2),
                     ),
+                    title: Text(
+                      alat?['nama_alat'] ?? "Alat Tidak Diketahui",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text("Peminjam: ${item['id_user']?.toString().substring(0, 8) ?? 'User'}..."),
                   ),
-                  if (alat != null && alat['kode_aset'] != null)
-                    Image.network(alat['kode_aset'], width: 70, height: 50, fit: BoxFit.contain)
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Tgl: ${item['tgl_pinjam']?.toString().split('T')[0] ?? '-'}",
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      _buildStatusBadge(item['status'] ?? 'Proses'),
+                      IconButton(
+                        onPressed: () => _showDeleteDialog(item['id_peminjaman']),
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      )
+                    ],
+                  ),
                 ],
               ),
-              const Divider(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildStatusBadge(item['status'] ?? 'Dipinjam'),
-                  TextButton.icon(
-                    onPressed: () {}, 
-                    icon: const Icon(Icons.delete, color: Colors.red), 
-                    label: const Text("Hapus", style: TextStyle(color: Colors.red))
-                  )
-                ],
-              )
-            ],
-          ),
-        );
-      },
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildStatusBadge(String status) {
+    Color color = Colors.blue;
+    if (status.toLowerCase() == 'menunggu') color = Colors.orange;
+    if (status.toLowerCase() == 'kembali') color = Colors.green;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: const Color(0xFF0D2B52), borderRadius: BorderRadius.circular(5)),
-      child: Text(status, style: const TextStyle(color: Colors.white, fontSize: 10)),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
+      child: Text(
+        status,
+        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(dynamic id) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Hapus?"),
+        content: const Text("Yakin ingin menghapus riwayat ini?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Batal")),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteRiwayat(id);
+            },
+            child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 }

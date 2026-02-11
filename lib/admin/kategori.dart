@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'edit_alat.dart'; 
-import 'tambah_alat.dart'; // Import file tambah alat
+import 'tambah_alat.dart'; 
 
 class KategoriPage extends StatefulWidget {
   const KategoriPage({super.key});
@@ -28,7 +28,6 @@ class _KategoriPageState extends State<KategoriPage> {
     return supabase.from('alat').stream(primaryKey: ['id_alat']);
   }
 
-  // --- FUNGSI HAPUS ALAT ---
   Future<void> _deleteAlat(int idAlat) async {
     try {
       await supabase.from('alat').delete().match({'id_alat': idAlat});
@@ -37,7 +36,6 @@ class _KategoriPageState extends State<KategoriPage> {
     }
   }
 
-  // --- DIALOG KONFIRMASI HAPUS ---
   void _showDeleteDialog(int idAlat, String namaAlat) {
     showDialog(
       context: context,
@@ -148,12 +146,10 @@ class _KategoriPageState extends State<KategoriPage> {
             ],
           ),
           
-          // --- TOMBOL TAMBAH ALAT (DIPERBAIKI) ---
           Positioned(
             bottom: 30,
             right: 20,
             child: _buildFabAction("Tambah Alat", Icons.post_add_rounded, () {
-              // Navigasi ke halaman tambah alat
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const TambahAlatPage()),
@@ -185,6 +181,9 @@ class _KategoriPageState extends State<KategoriPage> {
   }
 
   Widget _buildCardAlat(Map<String, dynamic> alat) {
+    // Ambil data stok dari Supabase
+    final int stok = alat['stok'] ?? 0;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -203,12 +202,18 @@ class _KategoriPageState extends State<KategoriPage> {
           children: [
             Expanded(
               child: alat['kode_aset'] != null 
-                ? Image.network(alat['kode_aset'], fit: BoxFit.contain)
+                ? Image.network(
+                    alat['kode_aset'], 
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 40),
+                  )
                 : const Icon(Icons.image_not_supported, size: 40),
             ),
             const SizedBox(height: 8),
             Text(
               alat['nama_alat'] ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF002347)),
             ),
             const SizedBox(height: 12),
@@ -234,10 +239,23 @@ class _KategoriPageState extends State<KategoriPage> {
                     );
                   },
                 ),
+                
+                // --- PERUBAHAN DI SINI: BAGIAN STOK ---
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0xFF002347), borderRadius: BorderRadius.circular(10)),
-                  child: const Text("Pinjam", style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(
+                    // Warna berubah jadi merah jika stok 0
+                    color: stok > 0 ? const Color(0xFF002347) : Colors.red.shade800, 
+                    borderRadius: BorderRadius.circular(10)
+                  ),
+                  child: Text(
+                    "Tersedia: $stok", 
+                    style: const TextStyle(
+                      color: Colors.white, 
+                      fontSize: 10, 
+                      fontWeight: FontWeight.bold
+                    )
+                  ),
                 )
               ],
             ),
@@ -247,9 +265,8 @@ class _KategoriPageState extends State<KategoriPage> {
     );
   }
 
-  // Widget tombol yang dioptimalkan untuk deteksi klik
   Widget _buildFabAction(String label, IconData icon, VoidCallback onTap) {
-    return Material( // Menggunakan Material + Inkwell agar klik lebih responsif
+    return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
